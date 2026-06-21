@@ -206,8 +206,6 @@ async def get_latest_run_data(client, token):
         + NOMINATIN_GEOCODE_END_URL
     )
     geo_resp = await client.get(url_geo)
-    _LOGGER.error(url_geo)
-    _LOGGER.error(geo_resp)
     result = geo_resp.json()["address"]
 
     hood = None
