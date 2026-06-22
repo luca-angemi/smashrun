@@ -134,10 +134,10 @@ async def fetch_latest_run(client, token):
     resp = await client.get(f"{SMASHRUN_ACTIVITIES_URL}{token}")
     data = resp.json()
     activity_id = data[0]["activityId"]
-    vo2_resp = await client.get(
+    run_resp = await client.get(
         f"{SMASHRUN_RUN_BASE}{activity_id}{SMASHRUN_RUN_QUERY}{token}"
     )
-    run = vo2_resp.json()
+    run = run_resp.json()
     run["startDateTimeLocal"] = dt_util.parse_datetime(run["startDateTimeLocal"])
     return run
 
@@ -147,7 +147,7 @@ async def enrich_with_stats(client, token, run: dict):
     stats_resp = await client.get(f"{SMASHRUN_STATS_URL}{token}")
     stats = stats_resp.json()
     run["totalDistance"] = round(stats["totalDistance"])
-    run["run_count"] = stats["runCount"] - 20
+    run["run_count"] = stats["runCount"]
 
     now = dt_util.now()
     cy = f"/{now.year}"
