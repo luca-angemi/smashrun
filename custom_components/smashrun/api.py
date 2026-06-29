@@ -39,6 +39,13 @@ def compute_km_marks(activity: dict, km_interval: int = 1) -> list[dict]:
     lats = values[idx["latitude"]]
     lons = values[idx["longitude"]]
 
+    def _valid_position(i):
+        """Return the nearest valid (lon, lat) at or before index i."""
+        j = i
+        while j > 0 and (lats[j] == -1.0 or lons[j] == -1.0):
+            j -= 1
+        return lons[j], lats[j]
+
     n = len(distances)
     marks = []
     next_mark = km_interval
@@ -47,19 +54,19 @@ def compute_km_marks(activity: dict, km_interval: int = 1) -> list[dict]:
         d_prev, d_curr = distances[i - 1], distances[i]
 
         while d_curr >= next_mark > d_prev:
-            fraction = (
-                (next_mark - d_prev) / (d_curr - d_prev) if d_curr != d_prev else 0
-            )
-            lat = lats[i - 1] + (lats[i] - lats[i - 1]) * fraction
-            lon = lons[i - 1] + (lons[i] - lons[i - 1]) * fraction
+            fraction = (next_mark - d_prev) / (d_curr - d_prev) if d_curr != d_prev else 0
 
-            marks.append(
-                {
-                    "distance": next_mark,
-                    "lat": lat,
-                    "lon": lon,
-                }
-            )
+            if lats[i] != -1.0 and lons[i] != -1.0 and lats[i - 1] != -1.0 and lons[i - 1] != -1.0:
+                lat = lats[i - 1] + (lats[i] - lats[i - 1]) * fraction
+                lon = lons[i - 1] + (lons[i] - lons[i - 1]) * fraction
+            else:
+                lon, lat = _valid_position(i)
+
+            marks.append({
+                "distance": next_mark,
+                "lat": lat,
+                "lon": lon,
+            })
 
             next_mark += km_interval
 
@@ -96,7 +103,7 @@ async def fetch_image_data(run: dict):
     lats = values[idx["latitude"]]
     lons = values[idx["longitude"]]
 
-    route = [(lon, lat) for lon, lat in zip(lons, lats, strict=False)]
+    route = [(lon, lat) for lon, lat in zip(lons, lats) if (lon, lat) != (-1.0, -1.0)]
 
     start, finish = route[0], route[-1]
 
